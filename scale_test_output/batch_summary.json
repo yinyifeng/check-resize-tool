@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-11-13T11:34:03.889092",
+  "total_processed": 2,
+  "total_errors": 0,
+  "classification_summary": {
+    "personal": 2
+  },
+  "pdf_files": [
+    {
+      "type": "personal",
+      "path": "./scale_test_output/personal_checks_20251113_113403.pdf",
+      "check_count": 2
+    }
+  ],
+  "errors": []
+}

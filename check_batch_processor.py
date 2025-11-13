@@ -126,6 +126,12 @@ class CheckBatchProcessor:
         self.resizer = CheckResizer()
         self.classifier = CheckClassifier()
         
+        # Processing settings
+        self.auto_rotate = True
+        self.level_background = True
+        self.level_method = 'gaussian'
+        self.level_intensity = 'gentle'
+        
         # Print layout settings
         self.print_settings = {
             'page_size': letter,  # 8.5" x 11"
@@ -168,9 +174,10 @@ class CheckBatchProcessor:
                     image_path, 
                     temp_output.name,
                     preview=False,
-                    level_background=True,
-                    level_method='gaussian',
-                    level_intensity='gentle'
+                    level_background=self.level_background,
+                    level_method=self.level_method,
+                    level_intensity=self.level_intensity,
+                    auto_rotate=self.auto_rotate
                 )
                 
                 if not success:
@@ -251,7 +258,7 @@ class CheckBatchProcessor:
         return grouped
     
     def _create_print_pdf(self, checks: List[Dict], check_type: str, output_dir: str) -> str:
-        """Create a print-ready PDF with 3 checks per page."""
+        """Create a print-ready PDF with checks scaled to standard sizes."""
         
         pdf_filename = f"{check_type}_checks_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         pdf_path = os.path.join(output_dir, pdf_filename)
@@ -264,9 +271,28 @@ class CheckBatchProcessor:
         usable_width = page_width - 2 * margin
         usable_height = page_height - 2 * margin
         
-        # Calculate check dimensions for layout
+        # Get standard check dimensions from classification
+        check_specs = CheckClassifier.CHECK_TYPES[check_type]
+        target_width_inches = check_specs['width']
+        target_height_inches = check_specs['height']
+        
+        # Convert to points (72 points per inch)
+        target_width_points = target_width_inches * 72
+        target_height_points = target_height_inches * 72
+        
+        # Calculate layout - how many can fit on page
         checks_per_page = self.print_settings['checks_per_page']
-        check_height = (usable_height - (checks_per_page - 1) * spacing) / checks_per_page
+        available_height_per_check = (usable_height - (checks_per_page - 1) * spacing) / checks_per_page
+        
+        # Scale down if check is too large for layout
+        layout_scale = min(
+            usable_width / target_width_points,
+            available_height_per_check / target_height_points,
+            1.0  # Don't scale up
+        )
+        
+        final_check_width = target_width_points * layout_scale
+        final_check_height = target_height_points * layout_scale
         
         c = canvas.Canvas(pdf_path, pagesize=self.print_settings['page_size'])
         
@@ -275,22 +301,15 @@ class CheckBatchProcessor:
                 c.showPage()  # New page
             
             position_on_page = i % checks_per_page
-            y_offset = page_height - margin - (position_on_page * (check_height + spacing)) - check_height
+            y_offset = page_height - margin - (position_on_page * (final_check_height + spacing)) - final_check_height
             
-            # Load and scale image
+            # Load and scale image to standard check size
             try:
                 pil_image = Image.open(check_info['processed_path'])
                 
-                # Calculate scaling to fit width
-                scale = usable_width / pil_image.width
-                scaled_width = usable_width
-                scaled_height = pil_image.height * scale
-                
-                # If too tall, scale to fit height instead
-                if scaled_height > check_height:
-                    scale = check_height / pil_image.height
-                    scaled_height = check_height
-                    scaled_width = pil_image.width * scale
+                # Scale image to final check dimensions
+                scaled_width = final_check_width
+                scaled_height = final_check_height
                 
                 # Center horizontally
                 x_offset = margin + (usable_width - scaled_width) / 2
@@ -314,11 +333,11 @@ class CheckBatchProcessor:
             except Exception as e:
                 # Draw error placeholder
                 c.setFillColor("red")
-                c.rect(margin, y_offset, usable_width, check_height)
+                c.rect(margin, y_offset, usable_width, final_check_height)
                 c.setFillColor("white")
                 c.setFont("Helvetica", 12)
                 c.drawCentredText(
-                    page_width / 2, y_offset + check_height / 2,
+                    page_width / 2, y_offset + final_check_height / 2,
                     f"Error loading: {Path(check_info['original_path']).name}"
                 )
         

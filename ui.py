@@ -41,7 +41,7 @@ def create_download_link(img_bytes, filename):
     return href
 
 
-def process_image_ui(uploaded_file, resizer, level_background=False, level_method='morphological', level_intensity='gentle'):
+def process_image_ui(uploaded_file, resizer, level_background=False, level_method='morphological', level_intensity='gentle', auto_rotate=True):
     """Process uploaded image and display results."""
     try:
         # Convert uploaded file to PIL Image
@@ -154,6 +154,7 @@ def process_image_ui(uploaded_file, resizer, level_background=False, level_metho
         
         # Show processing options being used
         st.write(f"**Processing Settings:**")
+        st.write(f"- Auto-rotation: {'✅ Enabled' if auto_rotate else '❌ Disabled'}")
         st.write(f"- Background leveling: {'✅ Enabled' if level_background else '❌ Disabled'}")
         if level_background:
             st.write(f"- Leveling method: {level_method.title()}")
@@ -163,6 +164,18 @@ def process_image_ui(uploaded_file, resizer, level_background=False, level_metho
         show_debug = st.checkbox("Show debug information", value=False, help="Display detailed processing information")
         
         with st.spinner("Analyzing image and finding optimal crop boundaries..."):
+            # Apply auto-rotation if requested
+            if auto_rotate:
+                cv_image, rotation_applied = resizer.rotate_image_if_needed(cv_image, auto_rotate=True)
+                if rotation_applied > 0:
+                    st.info(f"🔄 Auto-rotated image {rotation_applied}° for horizontal orientation")
+                    
+                    # Update PIL image to match rotation
+                    if len(cv_image.shape) == 3:
+                        pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB))
+                    else:
+                        pil_image = Image.fromarray(cv_image, mode='L')
+            
             # Apply background leveling if requested
             if level_background:
                 st.info(f"🎚️ Applying {level_intensity} {level_method} background leveling...")
@@ -345,6 +358,13 @@ def show_processing_options():
     """Show processing options in the sidebar."""
     st.sidebar.header("⚙️ Processing Options")
     
+    # Auto-rotation option
+    auto_rotate = st.sidebar.checkbox(
+        "🔄 Auto-rotate to horizontal",
+        value=True,
+        help="Automatically detect and correct image orientation"
+    )
+    
     # Background leveling options
     leveling_section = st.sidebar.expander("🎚️ Background Leveling", expanded=True)
     with leveling_section:
@@ -383,6 +403,7 @@ def show_processing_options():
             level_intensity = "gentle"
     
     # Store in session state
+    st.session_state.auto_rotate = auto_rotate
     st.session_state.level_background = level_background
     st.session_state.level_method = level_method if level_background else "morphological"
     st.session_state.level_intensity = level_intensity if level_background else "gentle"
@@ -453,12 +474,13 @@ def main():
     
     if uploaded_file is not None:
         # Get processing options
+        auto_rot = st.session_state.get('auto_rotate', True)
         level_bg = st.session_state.get('level_background', False)
         level_meth = st.session_state.get('level_method', 'morphological')
         level_intens = st.session_state.get('level_intensity', 'gentle')
         
         # Process the uploaded image
-        process_image_ui(uploaded_file, resizer, level_bg, level_meth, level_intens)
+        process_image_ui(uploaded_file, resizer, level_bg, level_meth, level_intens, auto_rot)
     
     else:
         # Show example/demo section when no file is uploaded

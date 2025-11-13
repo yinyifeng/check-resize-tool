@@ -53,6 +53,12 @@ def main():
         help="Algorithm for background removal"
     )
     
+    auto_rotate = st.sidebar.checkbox(
+        "Auto-Rotate Images", 
+        value=True,
+        help="Automatically detect and correct image orientation to horizontal"
+    )
+    
     checks_per_page = st.sidebar.selectbox(
         "Checks Per Page",
         [1, 2, 3, 4],
@@ -114,10 +120,11 @@ def main():
                     processor = CheckBatchProcessor()
                     processor.print_settings['checks_per_page'] = checks_per_page
                     
-                    # Override resizer settings
-                    processor.resizer.level_background = enable_background_leveling
-                    processor.resizer.level_method = level_method
-                    processor.resizer.level_intensity = level_intensity
+                    # Configure processing settings
+                    processor.auto_rotate = auto_rotate
+                    processor.level_background = enable_background_leveling
+                    processor.level_method = level_method
+                    processor.level_intensity = level_intensity
                     
                     status_text.text("🔄 Processing check images...")
                     progress_bar.progress(0.1)

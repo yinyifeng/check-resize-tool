@@ -11,6 +11,7 @@ Automatically process multiple check images with classification and print-ready 
 
 ### 🖼️ Image Processing
 - Automatic cropping and whitespace removal
+- **Auto-rotation detection and correction** for proper horizontal orientation
 - Background leveling (remove paper texture/shadows)
 - Multiple detection algorithms with fallbacks
 - Handles various image formats (PNG, JPG, TIFF, BMP)

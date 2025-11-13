@@ -141,8 +141,8 @@ def create_sample_check(check_type: str, filename: str, dpi: int = 300) -> str:
     
     # Add some realistic imperfections
     # Slight rotation
-    if random.random() > 0.5:
-        angle = random.uniform(-1.5, 1.5)  # Small rotation
+    if random.random() > 0.3:  # Increased chance of rotation for demo
+        angle = random.uniform(-15, 15)  # Larger rotation range
         image = image.rotate(angle, expand=True, fillcolor='white')
     
     # Add some margin/padding to simulate scanning
@@ -154,6 +154,12 @@ def create_sample_check(check_type: str, filename: str, dpi: int = 300) -> str:
     paste_x = (padded_width - image.width) // 2
     paste_y = (padded_height - image.height) // 2
     padded_image.paste(image, (paste_x, paste_y))
+    
+    # Randomly apply 90-degree rotations to simulate phone photos
+    if random.random() > 0.7:  # 30% chance
+        rotation_steps = random.choice([1, 2, 3])  # 90, 180, or 270 degrees
+        for _ in range(rotation_steps):
+            padded_image = padded_image.rotate(90, expand=True)
     
     # Save image
     padded_image.save(filename, 'PNG', dpi=(dpi, dpi))

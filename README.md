@@ -6,6 +6,7 @@ A comprehensive Python tool for automatically analyzing, resizing, and processin
 
 ### Individual Check Processing
 - **Web Interface**: User-friendly web UI for drag-and-drop image processing
+- **Auto-Rotation**: Automatic detection and correction of image orientation to horizontal
 - **Background Leveling**: Remove background variations, shadows, and uneven lighting
 - **Automatic Edge Detection**: Uses multiple computer vision algorithms (Canny edge detection, adaptive thresholding, morphological operations) to find optimal crop boundaries
 - **Intelligent Cropping**: Automatically detects check boundaries and removes whitespace while preserving all important content
@@ -16,6 +17,7 @@ A comprehensive Python tool for automatically analyzing, resizing, and processin
 
 ### 🆕 Batch Processing (NEW!)
 - **Automatic Classification**: Identifies Personal, Business, and Commercial checks
+- **Auto-Rotation**: Detects and corrects orientation for all uploaded images
 - **Bulk Upload**: Process multiple check images simultaneously  
 - **Print Layout Generation**: Creates print-ready PDFs with 3 checks per page
 - **Smart Grouping**: Automatically groups checks by type for organized output
@@ -135,6 +137,9 @@ python check_resizer.py input_check.jpg -o output_check.jpg
 
 # With background leveling (enabled by default)
 python check_resizer.py input_check.jpg --level-method gaussian
+
+# Disable auto-rotation
+python check_resizer.py input_check.jpg --no-auto-rotate
 
 # Disable background leveling
 python check_resizer.py input_check.jpg --no-level-background

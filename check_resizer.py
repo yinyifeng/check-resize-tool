@@ -583,6 +583,156 @@ class CheckResizer:
         except Exception:
             return None
     
+    def detect_orientation(self, image):
+        """
+        Detect if an image needs rotation to be horizontal.
+        
+        Args:
+            image: Input image (OpenCV format)
+            
+        Returns:
+            rotation_angle: 0, 90, 180, or 270 degrees needed for correct orientation
+        """
+        try:
+            # Convert to grayscale for analysis
+            if len(image.shape) == 3:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image.copy()
+            
+            height, width = gray.shape
+            
+            # Quick aspect ratio check first
+            aspect_ratio = width / height
+            
+            # If clearly horizontal (width > height), probably correct
+            if aspect_ratio > 1.2:
+                return 0
+            
+            # If clearly vertical (height > width), probably needs 90° rotation
+            if aspect_ratio < 0.8:
+                # Test both 90 and 270 degree rotations to see which looks more like a check
+                rotation_90 = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
+                rotation_270 = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                
+                # Analyze text/edge orientation using line detection
+                score_90 = self._calculate_horizontal_score(rotation_90)
+                score_270 = self._calculate_horizontal_score(rotation_270)
+                score_original = self._calculate_horizontal_score(gray)
+                
+                # Return the rotation that gives the best horizontal score
+                scores = {0: score_original, 90: score_90, 270: score_270}
+                best_rotation = max(scores, key=scores.get)
+                return best_rotation
+            
+            # For ambiguous cases (aspect ratio near 1:1), use line detection
+            orientations = [0, 90, 180, 270]
+            scores = {}
+            
+            for angle in orientations:
+                if angle == 0:
+                    test_image = gray
+                elif angle == 90:
+                    test_image = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
+                elif angle == 180:
+                    test_image = cv2.rotate(gray, cv2.ROTATE_180)
+                else:  # 270
+                    test_image = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                
+                scores[angle] = self._calculate_horizontal_score(test_image)
+            
+            # Return the angle with the highest horizontal score
+            best_angle = max(scores, key=scores.get)
+            return best_angle
+            
+        except Exception as e:
+            print(f"Warning: Orientation detection failed: {e}")
+            return 0
+    
+    def _calculate_horizontal_score(self, gray_image):
+        """
+        Calculate a score indicating how 'horizontal' an image appears.
+        Higher scores indicate better horizontal orientation for checks.
+        """
+        try:
+            # Apply edge detection
+            edges = cv2.Canny(gray_image, 50, 150, apertureSize=3)
+            
+            # Detect lines using Hough transform
+            lines = cv2.HoughLines(edges, 1, np.pi/180, threshold=100)
+            
+            horizontal_score = 0
+            vertical_score = 0
+            
+            if lines is not None:
+                for line in lines:
+                    rho, theta = line[0]
+                    angle_deg = theta * 180 / np.pi
+                    
+                    # Count horizontal lines (near 0° or 180°)
+                    if angle_deg < 15 or angle_deg > 165:
+                        horizontal_score += 1
+                    # Count vertical lines (near 90°)
+                    elif 75 < angle_deg < 105:
+                        vertical_score += 1
+            
+            # Additional scoring based on text-like features
+            # Checks typically have more horizontal text lines than vertical
+            
+            # Use morphological operations to detect horizontal vs vertical structures
+            horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
+            vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40))
+            
+            horizontal_lines = cv2.morphologyEx(edges, cv2.MORPH_OPEN, horizontal_kernel)
+            vertical_lines = cv2.morphologyEx(edges, cv2.MORPH_OPEN, vertical_kernel)
+            
+            horizontal_pixels = np.sum(horizontal_lines > 0)
+            vertical_pixels = np.sum(vertical_lines > 0)
+            
+            # Combine line detection and morphological analysis
+            total_score = (horizontal_score * 2 + horizontal_pixels) - (vertical_score + vertical_pixels * 0.5)
+            
+            return total_score
+            
+        except Exception:
+            return 0
+    
+    def rotate_image_if_needed(self, image, auto_rotate=True):
+        """
+        Automatically detect and correct image orientation.
+        
+        Args:
+            image: Input image (OpenCV format)
+            auto_rotate: Whether to perform automatic rotation
+            
+        Returns:
+            rotated_image: Image rotated to horizontal orientation
+            rotation_applied: Degrees rotated (0, 90, 180, or 270)
+        """
+        if not auto_rotate:
+            return image, 0
+            
+        try:
+            rotation_needed = self.detect_orientation(image)
+            
+            if rotation_needed == 0:
+                return image, 0
+            elif rotation_needed == 90:
+                rotated = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+                return rotated, 90
+            elif rotation_needed == 180:
+                rotated = cv2.rotate(image, cv2.ROTATE_180)
+                return rotated, 180
+            elif rotation_needed == 270:
+                rotated = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                return rotated, 270
+            else:
+                return image, 0
+                
+        except Exception as e:
+            print(f"Warning: Auto-rotation failed: {e}")
+            return image, 0
+
     def analyze_image(self, image):
         """Analyze image using multiple methods and return the best bounds."""
         methods = [
@@ -645,7 +795,7 @@ class CheckResizer:
         
         return best_result['bounds']
     
-    def resize_image(self, image_path, output_path=None, preview=False, level_background=False, level_method='morphological', level_intensity='gentle'):
+    def resize_image(self, image_path, output_path=None, preview=False, level_background=False, level_method='morphological', level_intensity='gentle', auto_rotate=True):
         """Resize a single check image by removing whitespace."""
         print(f"Processing: {image_path}")
         
@@ -653,6 +803,18 @@ class CheckResizer:
         cv_image, pil_image = self.load_image(image_path)
         if cv_image is None:
             return False
+        
+        # Auto-rotate image if needed
+        if auto_rotate:
+            cv_image, rotation_applied = self.rotate_image_if_needed(cv_image, auto_rotate=True)
+            if rotation_applied > 0:
+                print(f"Auto-rotated image {rotation_applied}° for horizontal orientation")
+                
+                # Update PIL image to match rotation
+                if len(cv_image.shape) == 3:
+                    pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB))
+                else:
+                    pil_image = Image.fromarray(cv_image, mode='L')
         
         # Apply background leveling if requested
         if level_background:
@@ -723,7 +885,7 @@ class CheckResizer:
         
         return True
     
-    def batch_resize(self, input_dir, output_dir=None, preview=False, level_background=False, level_method='morphological', level_intensity='gentle'):
+    def batch_resize(self, input_dir, output_dir=None, preview=False, level_background=False, level_method='morphological', level_intensity='gentle', auto_rotate=True):
         """Process multiple images in a directory."""
         input_path = Path(input_dir)
         
@@ -752,6 +914,8 @@ class CheckResizer:
         print(f"Found {len(image_files)} image(s) to process")
         if level_background:
             print(f"Background leveling enabled using {level_intensity} {level_method} method")
+        if auto_rotate:
+            print("Auto-rotation enabled")
         
         success_count = 0
         for image_file in image_files:
@@ -761,7 +925,8 @@ class CheckResizer:
                                preview=preview and len(image_files) <= 5,
                                level_background=level_background,
                                level_method=level_method,
-                               level_intensity=level_intensity):
+                               level_intensity=level_intensity,
+                               auto_rotate=auto_rotate):
                 success_count += 1
         
         print(f"\nProcessed {success_count}/{len(image_files)} images successfully")
@@ -781,6 +946,8 @@ def main():
                        default="morphological", help="Background leveling method (default: morphological)")
     parser.add_argument("--level-intensity", choices=["gentle", "medium", "strong"],
                        default="gentle", help="Background leveling intensity (default: gentle)")
+    parser.add_argument("--no-auto-rotate", action="store_true", default=False,
+                       help="Disable automatic image rotation detection (default: enabled)")
     
     args = parser.parse_args()
     
@@ -793,7 +960,8 @@ def main():
     
     if args.batch or input_path.is_dir():
         resizer.batch_resize(args.input, args.output, args.preview, 
-                           args.level_background, args.level_method, args.level_intensity)
+                           args.level_background, args.level_method, args.level_intensity, 
+                           auto_rotate=not args.no_auto_rotate)
     else:
         # Single file processing
         if args.output:
@@ -805,7 +973,8 @@ def main():
             output_path = input_path.parent / f"{stem}_resized{suffix}"
         
         resizer.resize_image(args.input, output_path, args.preview,
-                           args.level_background, args.level_method, args.level_intensity)
+                           args.level_background, args.level_method, args.level_intensity,
+                           auto_rotate=not args.no_auto_rotate)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-11-13T11:33:16.708647",
+  "total_processed": 6,
+  "total_errors": 0,
+  "classification_summary": {
+    "personal": 2,
+    "business": 2,
+    "commercial": 2
+  },
+  "pdf_files": [
+    {
+      "type": "personal",
+      "path": "./test_realistic_output/personal_checks_20251113_113316.pdf",
+      "check_count": 2
+    },
+    {
+      "type": "business",
+      "path": "./test_realistic_output/business_checks_20251113_113316.pdf",
+      "check_count": 2
+    },
+    {
+      "type": "commercial",
+      "path": "./test_realistic_output/commercial_checks_20251113_113316.pdf",
+      "check_count": 2
+    }
+  ],
+  "errors": []
+}

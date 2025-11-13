@@ -1,0 +1,14 @@
+Check Batch Processing Summary
+========================================
+
+Processed: 2025-11-13 11:34:03
+Total Images: 2
+Errors: 0
+
+Classification Results:
+-------------------------
+Personal: 2 checks
+
+Generated PDF Files:
+--------------------
+Personal: personal_checks_20251113_113403.pdf (2 checks)

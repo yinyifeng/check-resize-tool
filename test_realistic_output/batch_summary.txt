@@ -1,0 +1,18 @@
+Check Batch Processing Summary
+========================================
+
+Processed: 2025-11-13 11:33:16
+Total Images: 6
+Errors: 0
+
+Classification Results:
+-------------------------
+Personal: 2 checks
+Business: 2 checks
+Commercial: 2 checks
+
+Generated PDF Files:
+--------------------
+Personal: personal_checks_20251113_113316.pdf (2 checks)
+Business: business_checks_20251113_113316.pdf (2 checks)
+Commercial: commercial_checks_20251113_113316.pdf (2 checks)
