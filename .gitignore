@@ -48,6 +48,17 @@ Thumbs.db
 
 # Project specific
 demo_images/
+
+# Large deployment packages (exceed GitHub 100MB limit)
+CheckResizer_Standalone/
+CheckResizer_Complete_Offline/
+CheckResizer_WebApp_Final/
+CheckResizer_Offline_Complete/
+CheckResizer_Portable_Python/
+*.app
+*.exe
+*.dmg
+python_packages/
 demo_output/
 debug_output/
 test_check*.png
