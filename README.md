@@ -1,18 +1,27 @@
 # Check Resize Tool
 
-A Python tool for automatically analyzing and resizing check images by removing unnecessary whitespace while preserving the check content.
+A comprehensive Python tool for automatically analyzing, resizing, and processing check images with automatic classification and print layout generation.
 
-## Features
+## 🌟 Features
 
+### Individual Check Processing
 - **Web Interface**: User-friendly web UI for drag-and-drop image processing
 - **Background Leveling**: Remove background variations, shadows, and uneven lighting
 - **Automatic Edge Detection**: Uses multiple computer vision algorithms (Canny edge detection, adaptive thresholding, morphological operations) to find optimal crop boundaries
 - **Intelligent Cropping**: Automatically detects check boundaries and removes whitespace while preserving all important content
 - **Multiple Processing Methods**: Employs different algorithms and selects the best result for each image
-- **Batch Processing**: Process multiple images at once
 - **Preview Functionality**: See before/after comparisons before saving
 - **High Quality Output**: Maintains image quality while reducing file size
 - **Flexible Input/Output**: Support for various image formats and custom output paths
+
+### 🆕 Batch Processing (NEW!)
+- **Automatic Classification**: Identifies Personal, Business, and Commercial checks
+- **Bulk Upload**: Process multiple check images simultaneously  
+- **Print Layout Generation**: Creates print-ready PDFs with 3 checks per page
+- **Smart Grouping**: Automatically groups checks by type for organized output
+- **Professional PDFs**: Generates publication-ready documents with proper margins and scaling
+- **Progress Tracking**: Real-time processing status and detailed reporting
+- **Download Management**: Individual or bulk download of processed files
 
 ## Installation
 
@@ -46,37 +55,76 @@ pip install -r requirements.txt
 
 ```
 check-resize-tool/
-├── ui.py                 # Web interface (Streamlit app)
-├── launch_ui.py          # Quick launcher for the web UI
-├── check_resizer.py      # Main processing engine
-├── requirements.txt      # Python dependencies
-├── README.md            # This documentation
-├── test_installation.py # Installation verification
-├── demo.py             # Sample image generator and demo
-├── example_usage.py    # Programmatic usage examples
-├── config.ini          # Advanced configuration options
-└── .gitignore          # Git ignore file
+├── ui.py                       # Individual check processing UI
+├── batch_ui.py                 # NEW: Batch processing UI
+├── start_check_resizer.py      # Launcher for individual processing
+├── start_batch_processor.py    # NEW: Launcher for batch processing
+├── check_resizer.py            # Core processing engine
+├── check_batch_processor.py    # NEW: Batch processing engine
+├── demo_batch.py              # NEW: Batch processing demo
+├── test_pdf_downloads.py      # NEW: PDF download functionality test
+├── download_server.py         # NEW: Alternative download server
+├── requirements.txt            # Python dependencies
+├── README.md                  # This documentation
+├── BATCH_README.md            # NEW: Detailed batch processing guide
+├── TROUBLESHOOTING_DOWNLOADS.md  # NEW: Download troubleshooting guide
+├── test_installation.py       # Installation verification
+├── demo.py                    # Individual processing demo
+├── example_usage.py           # Programmatic usage examples
+├── config.ini                 # Advanced configuration options
+└── .gitignore                 # Git ignore file
 ```
+
+## Quick Start
+
+### Individual Check Processing
+The easiest way to process single checks is through the web interface:
+
+```bash
+python start_check_resizer.py
+```
+
+This opens a web browser with an intuitive interface where you can:
+- Upload check images by drag-and-drop or clicking to browse
+- Preview results before downloading
+- Download cropped images with one click
+- See detailed processing statistics
+
+### 🆕 Batch Check Processing (NEW!)
+For processing multiple checks with automatic classification and print layouts:
+
+```bash
+python start_batch_processor.py
+```
+
+This opens a specialized batch interface where you can:
+- **Upload multiple checks** at once (drag-and-drop supported)
+- **Automatic classification** into Personal, Business, and Commercial types
+- **Generate print-ready PDFs** with 3 checks per page, grouped by type
+- **Download organized results** as individual PDFs or complete ZIP file
+- **View detailed reports** with processing statistics and confidence scores
 
 ## Usage
 
 ### Web UI (Recommended for most users)
 
-The easiest way to use the tool is through the web interface:
-
+#### Individual Check Processing
 ```bash
-# Start the web UI
-python launch_ui.py
+# Start the individual processing UI
+python start_check_resizer.py
 
-# Or directly with streamlit
+# Or directly with streamlit  
 python -m streamlit run ui.py
 ```
 
-This will open a web browser with an intuitive interface where you can:
-- **Upload check images** by dragging and dropping or clicking to browse
-- **Preview the results** before downloading
-- **Download cropped images** with one click
-- **See detailed statistics** about the processing
+#### Batch Processing (NEW!)
+```bash
+# Start the batch processing UI
+python start_batch_processor.py
+
+# Or directly with streamlit (uses port 8502)
+python -m streamlit run batch_ui.py --server.port 8502
+```
 
 ### Command Line Interface
 
@@ -105,8 +153,53 @@ python check_resizer.py input_folder/ --batch
 python check_resizer.py input_folder/ --batch --level-method polynomial
 ```
 
+#### 🆕 Advanced Batch Processing with Classification:
+```bash
+# Process multiple checks and create print-ready PDFs
+python demo_batch.py  # Creates sample data and demonstrates workflow
+
+# Programmatic batch processing
+python -c "
+from check_batch_processor import CheckBatchProcessor
+processor = CheckBatchProcessor()
+results = processor.process_batch(['check1.jpg', 'check2.png'], './output/')
+print(f'Generated {len(results[\"pdf_files\"])} PDF files')
+"
+```
+
+### 🆕 Batch Processing Features
+
+The new batch processing system provides enterprise-level features:
+
+#### Automatic Check Classification
+- **Personal Checks**: ~6" × 2.75" (standard personal banking)
+- **Business Checks**: ~8.5" × 3.5" (business payments)  
+- **Commercial Checks**: ~8.5" × 11" (voucher-style with stubs)
+
+#### Print Layout Generation
+- **Smart Grouping**: Automatically groups checks by type
+- **Professional PDFs**: 3 checks per page with proper margins
+- **Scalable Output**: Maintains aspect ratios and print quality
+- **Metadata**: Includes filenames, page numbers, and timestamps
+
+#### Configuration Options
+```python
+from check_batch_processor import CheckBatchProcessor
+
+processor = CheckBatchProcessor()
+
+# Customize print layout
+processor.print_settings['checks_per_page'] = 4  # 1-4 checks per page
+processor.print_settings['margin'] = 0.75       # Custom margins
+processor.print_settings['page_size'] = A4      # Different page size
+
+# Process with custom settings
+results = processor.process_batch(image_paths, output_dir)
+```
+
 ### Programmatic Usage
 
+#### Individual Processing
 ```python
 from check_resizer import CheckResizer
 
@@ -120,12 +213,60 @@ resizer.resize_image('check.jpg', 'cropped_check.jpg',
 # Batch process a directory without leveling
 resizer.batch_resize('input_directory/', 'output_directory/', 
                     level_background=False)
+```
 
-# Try different leveling methods
-methods = ['morphological', 'gaussian', 'polynomial']
-for method in methods:
-    resizer.resize_image('check.jpg', f'check_{method}.jpg', 
-                        level_method=method)
+#### 🆕 Batch Processing with Classification
+```python
+from check_batch_processor import CheckBatchProcessor
+
+processor = CheckBatchProcessor()
+
+# Process multiple checks with automatic classification
+results = processor.process_batch([
+    'personal_check1.jpg',
+    'business_check.png', 
+    'commercial_check.pdf'
+], output_dir='./processed_checks/')
+
+# Access results
+print(f"Processed {len(results['processed_checks'])} checks")
+print(f"Classification: {results['classification_summary']}")
+print(f"Generated PDFs: {len(results['pdf_files'])}")
+
+# Download individual PDFs
+for pdf_info in results['pdf_files']:
+    print(f"{pdf_info['type']}: {pdf_info['path']} ({pdf_info['check_count']} checks)")
+```
+
+## 🔧 Alternative Download Methods
+
+If you experience issues downloading PDFs from the web interface:
+
+### Simple File Server
+Start a basic file server for direct downloads:
+```bash
+# Serve demo output files
+python download_server.py --directory demo_batch_output
+
+# Serve custom directory
+python download_server.py --directory /path/to/your/output
+
+# Use different port if needed
+python download_server.py --port 8504
+```
+
+This opens `http://localhost:8503` with clickable download links.
+
+### Manual File Access
+Processed files are saved in these locations:
+- **Demo output**: `./demo_batch_output/`
+- **Test output**: `./test_batch_output/`
+- **Custom processing**: Specify your own output directory
+
+### Verify Downloads Work
+Test the download functionality:
+```bash
+python test_pdf_downloads.py
 ```
 
 ## How It Works

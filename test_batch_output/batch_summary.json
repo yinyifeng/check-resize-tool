@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-11-13T11:05:52.357879",
+  "total_processed": 3,
+  "total_errors": 0,
+  "classification_summary": {
+    "personal": 1,
+    "business": 1,
+    "commercial": 1
+  },
+  "pdf_files": [
+    {
+      "type": "personal",
+      "path": "/var/folders/yq/xt1sbzd944q8mspz4gql2pdc0000gn/T/tmp384pddwu/output/personal_checks_20251113_110552.pdf",
+      "check_count": 1
+    },
+    {
+      "type": "business",
+      "path": "/var/folders/yq/xt1sbzd944q8mspz4gql2pdc0000gn/T/tmp384pddwu/output/business_checks_20251113_110552.pdf",
+      "check_count": 1
+    },
+    {
+      "type": "commercial",
+      "path": "/var/folders/yq/xt1sbzd944q8mspz4gql2pdc0000gn/T/tmp384pddwu/output/commercial_checks_20251113_110552.pdf",
+      "check_count": 1
+    }
+  ],
+  "errors": []
+}
