@@ -1,0 +1,37 @@
+# Usage Guide
+
+## Step-by-Step Instructions
+
+1. **Start the Application**
+   - Double-click CheckResizer{'.exe' if sys.platform == 'win32' else ''}
+   - A terminal window will open (do not close it)
+   - Wait for "Starting Check Resizer Web UI..." message
+
+2. **Access the Web Interface**
+   - Your browser should open automatically to http://localhost:8501
+   - If not, open any web browser and go to that address
+
+3. **Upload Images**
+   - Click "Browse files" or drag & drop check images
+   - Supported formats: JPG, PNG, BMP, TIFF
+   - Multiple files can be processed
+
+4. **Process Images**
+   - The tool automatically detects the best crop boundaries
+   - Review the before/after comparison
+   - Adjust settings in the sidebar if needed
+
+5. **Download Results**
+   - Click "Download Cropped Image" for each processed file
+   - Files are saved with "_cropped" suffix
+
+## Tips for Best Results
+- Ensure good lighting when scanning/photographing checks
+- Keep checks flat and straight
+- Include some whitespace around the check edges
+- Use high resolution (300+ DPI) for scanned images
+
+## Advanced Settings
+- **Background Leveling**: Enable for scanned documents with uneven lighting
+- **Intensity**: Choose gentle/medium/strong based on image quality
+- **Manual Cropping**: Available if automatic detection fails

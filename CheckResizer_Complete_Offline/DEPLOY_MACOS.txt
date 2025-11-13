@@ -1,0 +1,25 @@
+# macOS Deployment (No Python Required)
+
+## Option A: Use Existing Python
+Most macOS systems have Python 3 built-in:
+1. Copy CheckResizer_Complete_Offline/ to target Mac
+2. Run: python3 install_offline.py
+3. Run: python3 start_check_resizer.py
+
+## Option B: Portable Python (if no Python available)
+1. Create conda environment on internet machine:
+   conda create -n portable python=3.11
+   conda activate portable
+   pip install streamlit opencv-python pillow numpy scipy scikit-learn matplotlib
+   conda install conda-pack
+   conda-pack -n portable -o portable_python.tar.gz
+
+2. Copy to target machine and extract:
+   tar -xzf portable_python.tar.gz
+   source bin/activate
+   conda-unpack
+
+3. Run application:
+   ./bin/python start_check_resizer.py
+
+## Final Package Size: ~150MB
